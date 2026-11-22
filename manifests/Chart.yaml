@@ -1,0 +1,5 @@
+apiVersion: v2
+name: claude
+description: Generic Claude-prompt-execution queue (GraphQL API)
+version: 0.1.0
+appVersion: "0.1.0"

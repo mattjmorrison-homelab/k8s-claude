@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: claude
+  namespace: claude
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: graph-claude.morrisons.site
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: claude-backend
+                port:
+                  number: 8000
