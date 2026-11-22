@@ -1,0 +1,9 @@
+backend:
+  image:
+    repository: registry.morrisons.site/graph-claude
+    tag: 98d2d327b126f8f97d002b30a1abc81379dfe3f4
+
+verify:
+  image:
+    repository: alpine
+    digest: sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc # 3.20
