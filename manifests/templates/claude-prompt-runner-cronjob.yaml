@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: claude-prompt-runner
+  namespace: claude
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: prompt-runner
+              image: "{{ .Values.verify.image.repository }}@{{ .Values.verify.image.digest }}"
+              command: ["/bin/sh", "/scripts/run-prompts.sh"]
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+          volumes:
+            - name: script
+              configMap:
+                name: claude-prompt-runner-script
+                defaultMode: 0555
