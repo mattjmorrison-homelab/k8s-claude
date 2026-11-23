@@ -19,7 +19,7 @@ jobs:
           command: >-
             --context=git://github.com/mattjmorrison-homelab/k8s-claude.git#refs/heads/main
             --context-sub-path=prompt-runner
-            --dockerfile=prompt-runner/Dockerfile --skip-unused-stages=true --target=test --destination=registry.morrisons.site/claude-prompt-runner-test:${{ github.sha }}
+            --dockerfile=Dockerfile --skip-unused-stages=true --target=test --destination=registry.morrisons.site/claude-prompt-runner-test:${{ github.sha }}
           secret-volume: claude-prompt-runner-zot-pull-secret:/kaniko/.docker
           active-deadline-seconds: "1800"
 
@@ -39,7 +39,7 @@ jobs:
           command: >-
             --context=git://github.com/mattjmorrison-homelab/k8s-claude.git#refs/heads/main
             --context-sub-path=prompt-runner
-            --dockerfile=prompt-runner/Dockerfile --skip-unused-stages=true --target=release
+            --dockerfile=Dockerfile --skip-unused-stages=true --target=release
             --destination=registry.morrisons.site/claude-prompt-runner:${{ github.sha }}
           secret-volume: claude-prompt-runner-zot-pull-secret:/kaniko/.docker
           active-deadline-seconds: "1800"
