@@ -1,0 +1,37 @@
+suite: verify Job and its script ConfigMap
+templates:
+  - verify-job.yaml
+  - verify-script-configmap.yaml
+tests:
+  - it: claude-verify Job is a PostSync hook with BeforeHookCreation,HookSucceeded delete policy
+    template: verify-job.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: PostSync
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
+          value: BeforeHookCreation,HookSucceeded
+
+  - it: claude-verify Job's expected commit SHA comes from the backend image tag
+    template: verify-job.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXPECTED_BACKEND_COMMIT_SHA
+            value: 98d2d327b126f8f97d002b30a1abc81379dfe3f4
+
+  - it: verify script checks /version on the graph-claude hostname
+    template: verify-script-configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["verify.sh"]
+          pattern: https://graph-claude\.morrisons\.site/version
+
+  - it: claude-verify-script ConfigMap is also a PostSync hook
+    template: verify-script-configmap.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: PostSync

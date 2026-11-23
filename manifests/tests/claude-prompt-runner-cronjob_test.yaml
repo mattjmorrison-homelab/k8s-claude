@@ -1,0 +1,79 @@
+suite: claude-prompt-runner CronJob and its script ConfigMap
+templates:
+  - claude-prompt-runner-cronjob.yaml
+  - claude-prompt-runner-configmap.yaml
+tests:
+  - it: runs every 5 minutes
+    template: claude-prompt-runner-cronjob.yaml
+    asserts:
+      - equal:
+          path: spec.schedule
+          value: "*/5 * * * *"
+
+  - it: forbids concurrent runs
+    template: claude-prompt-runner-cronjob.yaml
+    asserts:
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Forbid
+
+  - it: uses the pinned node image
+    template: claude-prompt-runner-cronjob.yaml
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].image
+          value: node@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+
+  - it: mounts its script ConfigMap read-only
+    template: claude-prompt-runner-cronjob.yaml
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].configMap.name
+          value: claude-prompt-runner-script
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: /scripts
+
+  - it: claude-prompt-runner-script ConfigMap is NOT an ArgoCD hook
+    template: claude-prompt-runner-configmap.yaml
+    asserts:
+      - notExists:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+
+  - it: run-prompts script polls pendingPrompts and reports results back to graph-claude
+    template: claude-prompt-runner-configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["run-prompts.sh"]
+          pattern: https://graph-claude\.morrisons\.site/
+      - matchRegex:
+          path: data["run-prompts.sh"]
+          pattern: pendingPrompts
+      - matchRegex:
+          path: data["run-prompts.sh"]
+          pattern: completePrompt
+      - matchRegex:
+          path: data["run-prompts.sh"]
+          pattern: failPrompt
+
+  - it: run-prompts script's invoke_llm calls the claude CLI with WebSearch allowed
+    template: claude-prompt-runner-configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["run-prompts.sh"]
+          pattern: claude -p "\$prompt"
+      - matchRegex:
+          path: data["run-prompts.sh"]
+          pattern: --allowedTools WebSearch
+
+  - it: has no hostPath volume
+    template: claude-prompt-runner-cronjob.yaml
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.volumes[*].hostPath
+
+  - it: has no nodeSelector
+    template: claude-prompt-runner-cronjob.yaml
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector
