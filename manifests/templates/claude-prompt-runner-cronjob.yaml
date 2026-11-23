@@ -13,21 +13,17 @@ spec:
           restartPolicy: Never
           nodeSelector:
             kubernetes.io/hostname: imac
+          imagePullSecrets:
+            - name: claude-zot-pull-secret
           containers:
             - name: prompt-runner
-              image: "{{ .Values.promptRunner.image.repository }}@{{ .Values.promptRunner.image.digest }}"
-              command: ["/bin/sh", "/scripts/run-prompts.sh"]
+              image: "{{ .Values.promptRunner.image.repository }}:{{ .Values.promptRunner.image.tag }}"
+              command: ["node", "src/index.js"]
               volumeMounts:
-                - name: script
-                  mountPath: /scripts
                 - name: claude-config
                   mountPath: /root/.claude
                   readOnly: true
           volumes:
-            - name: script
-              configMap:
-                name: claude-prompt-runner-script
-                defaultMode: 0555
             - name: claude-config
               hostPath:
                 path: /home/mattjmorrison/.claude

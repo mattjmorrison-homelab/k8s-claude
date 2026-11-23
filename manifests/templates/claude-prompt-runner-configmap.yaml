@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: claude-prompt-runner-script
-  namespace: claude
-data:
-{{- (.Files.Glob "scripts/run-prompts.sh").AsConfig | nindent 2 }}

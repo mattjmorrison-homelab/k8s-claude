@@ -1,7 +1,6 @@
-suite: claude-prompt-runner CronJob and its script ConfigMap
+suite: claude-prompt-runner CronJob
 templates:
   - claude-prompt-runner-cronjob.yaml
-  - claude-prompt-runner-configmap.yaml
 tests:
   - it: runs every 5 minutes
     template: claude-prompt-runner-cronjob.yaml
@@ -17,54 +16,27 @@ tests:
           path: spec.concurrencyPolicy
           value: Forbid
 
-  - it: uses the pinned node image
+  - it: uses the published prompt-runner image
     template: claude-prompt-runner-cronjob.yaml
     asserts:
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].image
-          value: node@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+          value: registry.morrisons.site/claude-prompt-runner:2a4ad2f8d50dd0e9db6998bdcc9c207a0da8fb2f
 
-  - it: mounts its script ConfigMap read-only
+  - it: runs the prompt-runner Node entrypoint
     template: claude-prompt-runner-cronjob.yaml
     asserts:
       - equal:
-          path: spec.jobTemplate.spec.template.spec.volumes[0].configMap.name
-          value: claude-prompt-runner-script
+          path: spec.jobTemplate.spec.template.spec.containers[0].command
+          value: ["node", "src/index.js"]
+
+  - it: pulls the image using the zot pull secret
+    template: claude-prompt-runner-cronjob.yaml
+    asserts:
       - equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].mountPath
-          value: /scripts
-
-  - it: claude-prompt-runner-script ConfigMap is NOT an ArgoCD hook
-    template: claude-prompt-runner-configmap.yaml
-    asserts:
-      - notExists:
-          path: metadata.annotations["argocd.argoproj.io/hook"]
-
-  - it: run-prompts script polls pendingPrompts and reports results back to graph-claude
-    template: claude-prompt-runner-configmap.yaml
-    asserts:
-      - matchRegex:
-          path: data["run-prompts.sh"]
-          pattern: https://graphql\.morrisons\.site/
-      - matchRegex:
-          path: data["run-prompts.sh"]
-          pattern: pendingPrompts
-      - matchRegex:
-          path: data["run-prompts.sh"]
-          pattern: completePrompt
-      - matchRegex:
-          path: data["run-prompts.sh"]
-          pattern: failPrompt
-
-  - it: run-prompts script's invoke_llm calls the claude CLI with WebSearch allowed
-    template: claude-prompt-runner-configmap.yaml
-    asserts:
-      - matchRegex:
-          path: data["run-prompts.sh"]
-          pattern: claude -p "\$prompt"
-      - matchRegex:
-          path: data["run-prompts.sh"]
-          pattern: --allowedTools WebSearch
+          path: spec.jobTemplate.spec.template.spec.imagePullSecrets
+          value:
+            - name: claude-zot-pull-secret
 
   - it: pins to the imac node
     template: claude-prompt-runner-cronjob.yaml
@@ -78,14 +50,14 @@ tests:
     template: claude-prompt-runner-cronjob.yaml
     asserts:
       - equal:
-          path: spec.jobTemplate.spec.template.spec.volumes[1].hostPath.path
+          path: spec.jobTemplate.spec.template.spec.volumes[0].hostPath.path
           value: /home/mattjmorrison/.claude
       - equal:
-          path: spec.jobTemplate.spec.template.spec.volumes[1].hostPath.type
+          path: spec.jobTemplate.spec.template.spec.volumes[0].hostPath.type
           value: Directory
       - equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[1].mountPath
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].mountPath
           value: /root/.claude
       - equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[1].readOnly
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].readOnly
           value: true
