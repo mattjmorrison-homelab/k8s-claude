@@ -66,14 +66,26 @@ tests:
           path: data["run-prompts.sh"]
           pattern: --allowedTools WebSearch
 
-  - it: has no hostPath volume
+  - it: pins to the imac node
     template: claude-prompt-runner-cronjob.yaml
     asserts:
-      - notExists:
-          path: spec.jobTemplate.spec.template.spec.volumes[*].hostPath
-
-  - it: has no nodeSelector
-    template: claude-prompt-runner-cronjob.yaml
-    asserts:
-      - notExists:
+      - equal:
           path: spec.jobTemplate.spec.template.spec.nodeSelector
+          value:
+            kubernetes.io/hostname: imac
+
+  - it: mounts the host's claude config read-only
+    template: claude-prompt-runner-cronjob.yaml
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[1].hostPath.path
+          value: /home/mattjmorrison/.claude
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[1].hostPath.type
+          value: Directory
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[1].mountPath
+          value: /root/.claude
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[1].readOnly
+          value: true
