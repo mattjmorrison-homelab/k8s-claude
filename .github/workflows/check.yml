@@ -9,7 +9,7 @@ jobs:
     runs-on: k8s-amd64
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: mattjmorrison-homelab/actions-helm@4395b5c634dc5ad1ee5fbec95b86d445735ad81b
+      - uses: mattjmorrison-homelab/actions-helm@0e4a4ec223c1d0505715d38b2f4b060285082619
         with:
           namespace: claude
           service-account: claude-ci
