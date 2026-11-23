@@ -1,0 +1,64 @@
+suite: backend Deployment
+templates:
+  - namespace.yaml
+  - backend-deployment.yaml
+tests:
+  - it: namespace is claude
+    template: namespace.yaml
+    asserts:
+      - isKind:
+          of: Namespace
+      - equal:
+          path: metadata.name
+          value: claude
+
+  - it: references graph-claude's image by repository+tag and exposes port 8000
+    template: backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.morrisons.site/graph-claude:98d2d327b126f8f97d002b30a1abc81379dfe3f4
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8000
+
+  - it: sets CLAUDE_SERVICE_DB_PATH to /data/claude-service.db
+    template: backend-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CLAUDE_SERVICE_DB_PATH
+            value: /data/claude-service.db
+
+  - it: pulls via the claude-zot-pull-secret
+    template: backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: claude-zot-pull-secret
+
+  - it: runs as the claude ServiceAccount
+    template: backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: claude
+
+  - it: mounts the claude-data PVC at /data and uses Recreate rollout strategy
+    template: backend-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data
+            mountPath: /data
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            persistentVolumeClaim:
+              claimName: claude-data
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
