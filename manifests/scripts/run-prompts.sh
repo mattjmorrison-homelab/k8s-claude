@@ -3,11 +3,17 @@ set -eu
 
 GRAPH_URL="https://graph-claude.morrisons.site/"
 
-apk add --no-cache curl jq >/dev/null
+apt-get update >/dev/null
+apt-get install -y --no-install-recommends curl jq >/dev/null
+npm install -g @anthropic-ai/claude-code >/dev/null
 
 invoke_llm() {
-  echo "STUB: invoke_llm not yet implemented -- see k8s-claude README for what needs to replace this" >&2
-  return 1
+  prompt="$1"
+  # No credential is mounted in this container; claude -p will fail with an
+  # auth error until a credential-mounting mechanism (e.g. a hostPath volume
+  # to an already-logged-in host, or some other auth delivery) is added
+  # separately.
+  claude -p "$prompt" --allowedTools WebSearch
 }
 
 jobs=$(curl -sf -X POST "$GRAPH_URL" \
@@ -28,7 +34,7 @@ echo "$jobs" | while IFS= read -r job; do
     payload=$(jq -nc --arg id "$id" --arg response "$response" \
       '{query: "mutation($id: ID!, $response: String!) { claude { completePrompt(id: $id, response: $response) { id } } }", variables: {id: $id, response: $response}}')
   else
-    payload=$(jq -nc --arg id "$id" --arg error "invoke_llm not yet implemented" \
+    payload=$(jq -nc --arg id "$id" --arg error "invoke_llm failed - see job logs" \
       '{query: "mutation($id: ID!, $error: String!) { claude { failPrompt(id: $id, error: $error) { id } } }", variables: {id: $id, error: $error}}')
   fi
 
