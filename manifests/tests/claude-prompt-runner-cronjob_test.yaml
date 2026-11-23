@@ -45,7 +45,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["run-prompts.sh"]
-          pattern: https://graph-claude\.morrisons\.site/
+          pattern: https://graphql\.morrisons\.site/
       - matchRegex:
           path: data["run-prompts.sh"]
           pattern: pendingPrompts

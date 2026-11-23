@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-GRAPH_URL="https://graph-claude.morrisons.site/"
+GRAPH_URL="https://graphql.morrisons.site/"
 
 apt-get update >/dev/null
 apt-get install -y --no-install-recommends curl jq >/dev/null
