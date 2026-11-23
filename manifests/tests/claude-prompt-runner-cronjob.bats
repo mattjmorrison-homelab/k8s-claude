@@ -20,9 +20,9 @@ resource() {
   [ "$policy" = "Forbid" ]
 }
 
-@test "claude-prompt-runner CronJob uses the pinned alpine image" {
+@test "claude-prompt-runner CronJob uses the pinned node image" {
   image=$(resource CronJob claude-prompt-runner | yq '.spec.jobTemplate.spec.template.spec.containers[0].image')
-  [ "$image" = "alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc" ]
+  [ "$image" = "node@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0" ]
 }
 
 @test "claude-prompt-runner CronJob mounts its script ConfigMap read-only" {
@@ -45,6 +45,17 @@ resource() {
   grep -q 'failPrompt' scripts/run-prompts.sh
 }
 
-@test "run-prompts script's invoke_llm is a stub that always fails" {
-  grep -q 'invoke_llm not yet implemented' scripts/run-prompts.sh
+@test "run-prompts script's invoke_llm calls the claude CLI with WebSearch allowed" {
+  grep -q 'claude -p "\$prompt"' scripts/run-prompts.sh
+  grep -q -- '--allowedTools WebSearch' scripts/run-prompts.sh
+}
+
+@test "claude-prompt-runner CronJob has no hostPath volume" {
+  hostpaths=$(resource CronJob claude-prompt-runner | yq '.spec.jobTemplate.spec.template.spec.volumes[] | select(.hostPath)')
+  [ -z "$hostpaths" ]
+}
+
+@test "claude-prompt-runner CronJob has no nodeSelector" {
+  selector=$(resource CronJob claude-prompt-runner | yq '.spec.jobTemplate.spec.template.spec.nodeSelector // "none"')
+  [ "$selector" = "none" ]
 }

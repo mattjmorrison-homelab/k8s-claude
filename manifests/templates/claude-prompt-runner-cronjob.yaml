@@ -13,7 +13,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: prompt-runner
-              image: "{{ .Values.verify.image.repository }}@{{ .Values.verify.image.digest }}"
+              image: "{{ .Values.promptRunner.image.repository }}@{{ .Values.promptRunner.image.digest }}"
               command: ["/bin/sh", "/scripts/run-prompts.sh"]
               volumeMounts:
                 - name: script
