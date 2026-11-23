@@ -5,8 +5,8 @@ backend:
 
 promptRunner:
   image:
-    repository: node
-    digest: sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 # 20-bookworm-slim, confirmed live via docker buildx imagetools inspect 2026-11-23
+    repository: registry.morrisons.site/claude-prompt-runner
+    tag: 2a4ad2f8d50dd0e9db6998bdcc9c207a0da8fb2f
 
 verify:
   image:
