@@ -36,6 +36,7 @@ jobs:
           shell: "false"
           command: >-
             --context=git://github.com/mattjmorrison-homelab/k8s-claude.git#refs/heads/${{ github.head_ref }}
+            --context-sub-path=prompt-runner
             --dockerfile=prompt-runner/Dockerfile --skip-unused-stages=true --target=test --no-push
           active-deadline-seconds: "1800"
 
@@ -47,5 +48,6 @@ jobs:
           shell: "false"
           command: >-
             --context=git://github.com/mattjmorrison-homelab/k8s-claude.git#refs/heads/${{ github.head_ref }}
+            --context-sub-path=prompt-runner
             --dockerfile=prompt-runner/Dockerfile --skip-unused-stages=true --target=release --no-push
           active-deadline-seconds: "1800"
