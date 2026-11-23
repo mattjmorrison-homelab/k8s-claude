@@ -4,22 +4,28 @@ set -eu
 GRAPH_URL="https://graphql.morrisons.site/"
 
 apt-get update >/dev/null
-apt-get install -y --no-install-recommends curl jq >/dev/null
+apt-get install -y --no-install-recommends curl jq ca-certificates >/dev/null
+update-ca-certificates >/dev/null
 npm install -g @anthropic-ai/claude-code >/dev/null
 
 invoke_llm() {
   prompt="$1"
-  # No credential is mounted in this container; claude -p will fail with an
-  # auth error until a credential-mounting mechanism (e.g. a hostPath volume
-  # to an already-logged-in host, or some other auth delivery) is added
-  # separately.
   claude -p "$prompt" --allowedTools WebSearch
 }
 
-jobs=$(curl -sf -X POST "$GRAPH_URL" \
+pending_response=$(curl -sf -X POST "$GRAPH_URL" \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ claude { pendingPrompts { id prompt } } }"}' \
-  | jq -c '.data.claude.pendingPrompts[]')
+  -d '{"query":"{ claude { pendingPrompts { id prompt } } }"}') || {
+  echo "failed to reach $GRAPH_URL to fetch pending prompts" >&2
+  exit 1
+}
+
+if ! echo "$pending_response" | jq -e '.data.claude.pendingPrompts | type == "array"' >/dev/null 2>&1; then
+  echo "unexpected pendingPrompts response from $GRAPH_URL: $pending_response" >&2
+  exit 1
+fi
+
+jobs=$(echo "$pending_response" | jq -c '.data.claude.pendingPrompts[]')
 
 if [ -z "$jobs" ]; then
   echo "no pending prompts"
@@ -40,7 +46,10 @@ echo "$jobs" | while IFS= read -r job; do
 
   curl -sf -X POST "$GRAPH_URL" \
     -H "Content-Type: application/json" \
-    -d "$payload" >/dev/null
+    -d "$payload" >/dev/null || {
+    echo "failed to report result for job $id to $GRAPH_URL" >&2
+    exit 1
+  }
 
   echo "job $id: reported result"
 done
