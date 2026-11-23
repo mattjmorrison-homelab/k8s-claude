@@ -1,0 +1,18 @@
+suite: claude-data PVC
+templates:
+  - pvc.yaml
+tests:
+  - it: is ReadWriteOnce with 1Gi requested
+    asserts:
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadWriteOnce
+      - equal:
+          path: spec.resources.requests.storage
+          value: 1Gi
+
+  - it: has exactly one access mode
+    asserts:
+      - lengthEqual:
+          path: spec.accessModes
+          count: 1
