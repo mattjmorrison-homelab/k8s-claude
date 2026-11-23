@@ -35,3 +35,6 @@ tests:
       - equal:
           path: metadata.annotations["argocd.argoproj.io/hook"]
           value: PostSync
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-1"
