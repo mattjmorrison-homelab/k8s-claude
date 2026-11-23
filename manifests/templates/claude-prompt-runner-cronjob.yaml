@@ -11,6 +11,8 @@ spec:
       template:
         spec:
           restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/hostname: imac
           containers:
             - name: prompt-runner
               image: "{{ .Values.promptRunner.image.repository }}@{{ .Values.promptRunner.image.digest }}"
@@ -18,8 +20,15 @@ spec:
               volumeMounts:
                 - name: script
                   mountPath: /scripts
+                - name: claude-config
+                  mountPath: /root/.claude
+                  readOnly: true
           volumes:
             - name: script
               configMap:
                 name: claude-prompt-runner-script
                 defaultMode: 0555
+            - name: claude-config
+              hostPath:
+                path: /home/mattjmorrison/.claude
+                type: Directory
