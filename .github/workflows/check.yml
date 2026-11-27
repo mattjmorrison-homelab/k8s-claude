@@ -49,7 +49,7 @@ jobs:
           image: registry.morrisons.site/claude-prompt-runner-test:pr-${{ github.event.pull_request.head.sha }}
           command: npm test
 
-      - name: Validate the release-stage Dockerfile still builds
+      - name: Build and push the release image
         uses: mattjmorrison-homelab/actions-k8s@955b466878ae777505b822bb6c241f4f4e6805b5 # main
         with:
           service-account: claude-prompt-runner-job
@@ -58,5 +58,7 @@ jobs:
           command: >-
             --context=git://github.com/mattjmorrison-homelab/k8s-claude.git#refs/heads/${{ github.head_ref }}
             --context-sub-path=prompt-runner
-            --dockerfile=Dockerfile --skip-unused-stages=true --target=release --no-push
+            --dockerfile=Dockerfile --skip-unused-stages=true --target=release
+            --destination=registry.morrisons.site/claude-prompt-runner:pr-${{ github.event.pull_request.head.sha }}
+          secret-volume: claude-prompt-runner-zot-pull-secret:/kaniko/.docker
           active-deadline-seconds: "1800"
